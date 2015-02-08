@@ -2,14 +2,15 @@ module Celluloid
   # Celluloid::Future objects allow methods and blocks to run in the
   # background, their values requested later
   class Future
-    include Celluloid
     include Celluloid::Logger
 
     attr_reader :address
 
     def self.new(*args, &block)
       future = super
-      future.async.execute_block
+      Celluloid::ThreadHandle.new(Celluloid.actor_system, :future) do
+        future.execute_block
+      end
       future
     end
 
