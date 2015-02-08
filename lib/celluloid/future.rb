@@ -7,6 +7,12 @@ module Celluloid
 
     attr_reader :address
 
+    def self.new(*args, &block)
+      future = super
+      future.async.execute_block
+      future
+    end
+
     def initialize(*args, &block)
       @address = Celluloid.uuid
       @result = nil
@@ -15,10 +21,11 @@ module Celluloid
 
       @block = block
       @args = args
+    end
 
-      return self unless block_given?
-
-      async.execute_block  
+    def execute_block
+      result = @block.call(*@args)
+      @condition.signal(result)
     end
 
     # Check if this future has a value yet
@@ -47,11 +54,5 @@ module Celluloid
 
     # Inspect this Celluloid::Future
     alias_method :inspect, :to_s
-  end
-
-  private
-  def execute_block
-    result = @block.call(*@args)
-    @condition.signal(result)
   end
 end
